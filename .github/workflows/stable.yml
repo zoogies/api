@@ -44,7 +44,7 @@ jobs:
         working-directory: src/backend
         run: |
           docker buildx build --push \
-          --tag zoogies-api:latest \
+          --tag api:latest \
           --platform linux/arm/v7 .
       
       # - name: Delete old package versions
