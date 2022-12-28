@@ -41,7 +41,7 @@ jobs:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
 
       - name: Build and push container image
-        working-directory: src/
+        working-directory: src/backend
         run: |
           docker buildx build --push \
           --tag zoogies-api:latest \
