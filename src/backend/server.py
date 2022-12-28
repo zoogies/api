@@ -8,18 +8,31 @@ from lib import jsontools
 from flask import Flask, request
 from flask_cors import CORS
 
+# ===============================
+# FLASK OPERATIONS
+# ===============================
+
 # create flask app
 app = Flask(__name__)
 
 # cors-ify the app
 CORS(app)
 
+# ===============================
+# OTHER SETUP
+# ===============================
 # set the public ip address
 ip=requests.get('https://api64.ipify.org?format=json').json()['ip']
 
+# get the running version
+# Open the package.json file
+with open("package.json", "r") as f:
+    # Load the contents of the file as a JSON object
+    version = json.load(f)["version"]
+
 # AUTHORIZATION
 serverkey = None
-with open("secret.txt") as f:
+with open("./backups/secret.txt") as f:
     serverkey = f.read().strip()
 
 # general purpose auth function with locally defined server secret
@@ -29,7 +42,7 @@ def auth(password):
     else:
         return False
 
-def updatecurrent(data):
+def updatecurrent(data): # TODO MOVE THIS FUNC OUT OF THIS MAIN FILE
     # check validity of json uploaded
         if(jsontools.validate(data)): # returns true if data meets criteria, false if not
             # create a duplicate of the 'current.json' file renamed to the date (backup)
@@ -47,7 +60,9 @@ def updatecurrent(data):
 def getcurrent():
     return json.load(open('backups/current.json'))
 
+# ===============================
 # HUB API ROUTES
+# ===============================
 
 # api route for getting server statistics
 @app.route('/api/hub/getstats')
@@ -75,7 +90,9 @@ def getstats():
         }
     }
 
-# MITSURI API ROUTES
+# ===============================
+# MITSURI GIF API ROUTES
+# ===============================
 
 @app.route('/api/mitsuri/getgifs')
 def getgifs():
@@ -91,9 +108,7 @@ def setgifs():
 
 @app.route('/api/mitsuri/syncgifs', methods=["POST"])
 def syncgifs():
-    # process of syncing
-
-    # check timesfavorited in json sent, if its more than current.json we need to push changes, if its less we need to pull changes, if its the same nothign needs to happen
+    # check timesfavorited in json sent, if its more than current.json we need to push changes, if its less we need to pull changes, if its the same nothing needs to happen
     if(auth(request.authorization['password'])):
         if(jsontools.validate(request.json)):
             request_times = request.json['_state']['timesFavorited']
@@ -109,7 +124,6 @@ def syncgifs():
                 # print('less - need to update posted')
                 return {"status":"behind","new":getcurrent()},200
 
-
     # OTHER: if we go into the realm of automated check all clients connected
     return "An Error Has Occurred",500
 
@@ -119,13 +133,10 @@ def ryangif():
     index = random.randint(0,len(gifs['_state']['favorites']))
     return {"url":gifs['_state']['favorites'][index]['url'],"total":gifs['_state']['timesFavorited'],"index":index}
 
+# ===============================
+# BASE ROUTE VERSION NUMBER
+# ===============================
+
 @app.route('/api')
 def root():
-    return "Api release >> 12.22.22 >> Ryan Zmuda"
-
-
-# print("REMINDER >> Create src/backend/secret.txt && src/backend/backups/current.json")
-# print("REMINDER >> Current secret is set to -> "+serverkey)
-# app.run(host='0.0.0.0', use_reloader=True, port=5055, threaded=True, debug=True)
-
-# TODO this code quality and readability is so trash and not maintainable
+    return "stable release >> v"+version+" >> Ryan Zmuda, 2022"
