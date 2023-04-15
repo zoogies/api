@@ -1,3 +1,6 @@
 *.DS_STORE
 *.pyc
 src/backend/secret.txt
+models
+*__pycache__
+src/backend/backups/secret.txt

@@ -4,9 +4,11 @@ import psutil
 import json
 import requests
 import time
+import datetime
 from lib import jsontools
 from flask import Flask, request
 from flask_cors import CORS
+from transformers import GPT2Tokenizer, GPT2LMHeadModel
 
 # ===============================
 # FLASK OPERATIONS
@@ -21,8 +23,16 @@ CORS(app)
 # ===============================
 # OTHER SETUP
 # ===============================
+
 # set the public ip address
 ip=requests.get('https://api64.ipify.org?format=json').json()['ip']
+
+# set up the gpt2 zoogies model related things
+model_dir = "../../models/zoogies_one_epoch"
+tokenizer = GPT2Tokenizer.from_pretrained('gpt2')
+model = GPT2LMHeadModel.from_pretrained(model_dir)
+device = "cpu"
+model.to(device)
 
 # get the running version
 # Open the package.json file
@@ -34,6 +44,10 @@ with open("package.json", "r") as f:
 serverkey = None
 with open("./backups/secret.txt") as f:
     serverkey = f.read().strip()
+
+# ===============================
+# UTILITY FUNCTIONS
+# ===============================
 
 # general purpose auth function with locally defined server secret
 def auth(password):
@@ -134,9 +148,54 @@ def ryangif():
     return {"url":gifs['_state']['favorites'][index]['url'],"total":gifs['_state']['timesFavorited'],"index":index}
 
 # ===============================
+# ZOOGIES GPT2 MODEL ROUTES
+# ===============================
+
+# route for getting the available models for the dropdown list on the hub playground
+
+available_models = [{'name':'zoogies_one_epoch','description':'GPT2-125M fine tuned one epoch on 60k lines of discord logs up to 2022.'}] # potentially work in a release date here and then client side can sort by newest
+
+@app.route('/api/completion/models', methods=['GET'])
+def get_models():
+    try:
+        return{'models': available_models}
+    except Exception as e:
+        return {'error':str(e)}
+
+
+@app.route('/api/completion', methods=['POST'])
+def generate_text():
+    try:
+        prompt = request.form.get('prompt')
+        max_length = int(request.form.get('max_length', 200))
+        num_return_sequences = int(request.form.get('num_return_sequences', 1))
+        temperature = float(request.form.get('temperature', 0.9))
+        top_k = int(request.form.get('top_k', 90))
+        top_p = float(request.form.get('top_p', 0.9))
+        no_repeat_ngram_size = int(request.form.get('no_repeat_ngram_size', 1))
+
+        input_ids = tokenizer.encode(prompt, return_tensors='pt').to(device)
+        output = model.generate(
+            input_ids,
+            max_length=max_length,
+            num_return_sequences=num_return_sequences,
+            no_repeat_ngram_size=no_repeat_ngram_size,
+            temperature=temperature,
+            top_k=top_k,
+            top_p=top_p,
+            do_sample=True,
+            pad_token_id=tokenizer.eos_token_id,
+        )
+
+        generated_text = [tokenizer.decode(sequence, skip_special_tokens=True) for sequence in output]
+        return {'generated_text': generated_text}
+    except Exception as e:
+        return {'error':str(e)}
+
+# ===============================
 # BASE ROUTE VERSION NUMBER
 # ===============================
 
 @app.route('/api')
 def root():
-    return "stable release >> v"+version+" >> Ryan Zmuda, 2022"
+    return "stable release >> v"+version+" >> Ryan Zmuda, 2022-"+str(datetime.date.today().year)
