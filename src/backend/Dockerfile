@@ -1,4 +1,4 @@
-FROM python:3.12.0a1-bullseye
+FROM python:3.11.2
 WORKDIR /src/backend
 
 COPY requirements.txt requirements.txt
