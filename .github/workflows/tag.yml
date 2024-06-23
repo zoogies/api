@@ -4,19 +4,17 @@ on:
   push:
     branches:
       - main
+    workflow_dispatch:
 
 jobs:
   tag:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-        with:
-          token: ${{ secrets.PAT }}
-      - name: "Tag current version"
-        id: autotag
-        uses: butlerlogic/action-autotag@stable
-        with:
-          GITHUB_TOKEN: ${{ secrets.PAT }}
-          strategy: package
-          tag_prefix: "v"
-          root: "/src/backend/package.json"
+    - uses: actions/checkout@v3
+    - uses: butlerlogic/action-autotag@1.1.2
+      env:
+        GITHUB_TOKEN: "${{ secrets.PAT }}"
+      with:
+        strategy: package
+        tag_prefix: "v"
+        root: "/src/backend/package.json"

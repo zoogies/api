@@ -28,7 +28,7 @@ CORS(app)
 ip=requests.get('https://api64.ipify.org?format=json').json()['ip']
 
 # set up the gpt2 zoogies model related things
-model_dir = "../../models/zoogies_one_epoch"
+model_dir = "/hub_api/models/zoogies_one_epoch"
 tokenizer = GPT2Tokenizer.from_pretrained('gpt2')
 model = GPT2LMHeadModel.from_pretrained(model_dir)
 device = "cpu"
@@ -42,7 +42,7 @@ with open("package.json", "r") as f:
 
 # AUTHORIZATION
 serverkey = None
-with open("./backups/secret.txt") as f:
+with open("/hub_api/backups/secret.txt") as f:
     serverkey = f.read().strip()
 
 # ===============================
@@ -60,19 +60,19 @@ def updatecurrent(data): # TODO MOVE THIS FUNC OUT OF THIS MAIN FILE
     # check validity of json uploaded
         if(jsontools.validate(data)): # returns true if data meets criteria, false if not
             # create a duplicate of the 'current.json' file renamed to the date (backup)
-            open("./backups/"+str(int(time.time()))+".json", "w").write(open("./backups/current.json").read().replace("'",'"')) # replace normal apostrophe with double quote or it wont work
+            open("/hub_api/backups/"+str(int(time.time()))+".json", "w").write(open("/hub_api/backups/current.json").read().replace("'",'"')) # replace normal apostrophe with double quote or it wont work
            
             # rewrite 'current.json' to consist of non duplicate keys from upload and old records
-            merged = jsontools.merge('backups/current.json',data)
+            merged = jsontools.merge('/hub_api/backups/current.json',data)
             
-            with open('./backups/current.json', "w") as current:
+            with open('/hub_api/backups/current.json', "w") as current:
                 current.write(str(merged).replace("'",'"')) # replace normal apostrophe with double quote or it wont work
             return "done",200
         else:
             return "Bad json data",400
 
 def getcurrent():
-    return json.load(open('backups/current.json'))
+    return json.load(open('/hub_api/backups/current.json'))
 
 # ===============================
 # HUB API ROUTES
