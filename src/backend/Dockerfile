@@ -10,7 +10,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # Install PyTorch
-RUN pip3 install torch torchvision torchaudio
+RUN pip3 install torch
 RUN pip3 install -r requirements.txt
 
 COPY . .
